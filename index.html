@@ -485,10 +485,12 @@
       .replace(/[^A-ZÄÖÜ]/g, "");
 
     // ✅ FIX 3: garantiert EXAKT 4 Buchstaben, kein Prefix-Match, kein Trim-Trick
-    function isValidWord(w) {
-      if (w.length !== WORD_LEN) return false;
-      if (ALWAYS_ALLOWED.has(w)) return true;
-      return dictReady && DICT.has(w);
+   function isValidWord(w) {
+  if (w.length !== WORD_LEN) return false;
+  if (ALWAYS_ALLOWED.has(w)) return true;
+  return dictReady && DICT.has(w);
+}
+
     }
 
     function evaluateGuess(guess, answer) {
@@ -595,9 +597,9 @@
       document.body.style.overflow = "hidden";
     }
     function endGame(win) {
-      isOver = true;
-      if (win) openModal();
-      else setMsg(`Leider nein 😈 Das Wort war: ${ANSWER}`);
+  isOver = true;
+  if (win) openModal();
+  else setMsg(`Leider nein 😈 Das Wort war: ${ANSWER}`);
     }
 
     function resetGame() {
@@ -630,13 +632,13 @@
         const lines = text.split(/\r?\n/);
 
         for (const line of lines) {
-          const w = sanitizeDict(line.trim());
-          // ✅ Nur exakt 4 Buchstaben rein
-          if (w.length === WORD_LEN) DICT.add(w);
-        }
+  const raw = sanitizeDict(line.trim());     // <- OHNE slice
+  if (raw.length === WORD_LEN) DICT.add(raw); // <- nur exakt 4 rein
+}
+
 
         dictReady = true;
-        dictStatusEl.textContent = `Wörterbuch geladen (${DICT.size} Wörter).`;
+dictStatusEl.textContent = `Wörterbuch geladen (${DICT.size} Wörter).`;
       } catch (e) {
         dictReady = false;
         dictStatusEl.textContent = "Wörterbuch konnte nicht geladen werden (Datei fehlt?).";
@@ -673,7 +675,7 @@
       if (!dictReady) { setMsg("Wörterbuch lädt noch …"); shakeRow(tryIndex); return; }
 
       const guess = current;
-      if (guess.length !== WORD_LEN) { setMsg(`Bitte genau ${WORD_LEN} Buchstaben.`); shakeRow(tryIndex); return; }
+if (guess.length !== WORD_LEN) { setMsg(`Bitte genau ${WORD_LEN} Buchstaben.`); shakeRow(tryIndex); return; }
       if (!isValidWord(guess)) { setMsg("Das ist kein gültiges deutsches Wort."); shakeRow(tryIndex); return; }
 
       setMsg("");
