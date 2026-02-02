@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Begriffel – PRIM</title>
+
   <style>
     :root{
       --bg:#fff;
@@ -27,20 +28,18 @@
       background:var(--bg);
       color:var(--text);
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-      /* no scroll */
-      overflow:hidden;
+      overflow:hidden; /* no scroll */
     }
 
-    /* Fullscreen center without scroll */
     .stage{
-      height:100dvh; /* dynamic viewport for mobile */
+      height:100dvh;
       padding: clamp(10px, 2.2vh, 18px);
       display:grid;
       place-items:center;
     }
 
     .wrap{
-      width:min(520px, 100%);
+      width:min(560px, 100%);
       display:grid;
       gap: clamp(8px, 1.6vh, 14px);
       justify-items:center;
@@ -60,6 +59,7 @@
       line-height:1.25;
     }
 
+    /* ===== Board ===== */
     .board{
       width:100%;
       border:1px solid var(--border);
@@ -76,76 +76,135 @@
       gap: clamp(6px, 1.4vh, 10px);
     }
 
+    /* Shake row */
+    .row.shake{
+      animation: shake 380ms ease;
+    }
+    @keyframes shake{
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-10px); }
+      40% { transform: translateX(10px); }
+      60% { transform: translateX(-8px); }
+      80% { transform: translateX(8px); }
+    }
+
+    /* Flip tiles */
     .tile{
+      perspective: 900px;
+      border-radius: var(--tile-radius);
+      user-select:none;
+    }
+
+    .tileInner{
+      width:100%;
       aspect-ratio:1/1;
       border:2px solid var(--border);
       border-radius: var(--tile-radius);
       display:grid;
       place-items:center;
       font-weight:900;
-      font-size: clamp(18px, 5.6vh, 34px); /* scales with height */
+      font-size: clamp(18px, 5.6vh, 34px);
       letter-spacing:1px;
       text-transform:uppercase;
-      user-select:none;
-      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
       background:#fff;
+      transform-style: preserve-3d;
+      transition: transform 520ms cubic-bezier(.2,.8,.2,1), border-color 140ms ease;
     }
-    .tile.pop{ transform: scale(1.04); }
-    .tile.green{ background:var(--green); border-color:var(--green); color:#fff; }
-    .tile.yellow{ background:var(--yellow); border-color:var(--yellow); color:#111; }
-    .tile.gray{ background:var(--gray); border-color:var(--gray); color:#fff; }
 
+    .tile.revealing .tileInner{ transform: rotateX(180deg); }
+
+    /* Front/back faces to avoid mirrored text */
+    .face{
+      grid-area: 1 / 1;
+      backface-visibility: hidden;
+      width:100%;
+      height:100%;
+      display:grid;
+      place-items:center;
+      border-radius: var(--tile-radius);
+    }
+    .front{
+      background:#fff;
+      color:var(--text);
+    }
+    .back{
+      transform: rotateX(180deg);
+      color:#fff;
+    }
+
+    /* Colors apply to INNER + back face background */
+    .tile.green .tileInner{ border-color: var(--green); }
+    .tile.green .back{ background: var(--green); }
+
+    .tile.yellow .tileInner{ border-color: var(--yellow); }
+    .tile.yellow .back{ background: var(--yellow); color:#111; }
+
+    .tile.gray .tileInner{ border-color: var(--gray); }
+    .tile.gray .back{ background: var(--gray); }
+
+    /* little pop when typing */
+    .tile.pop .tileInner{ transform: scale(1.03); }
+
+    /* ===== Controls + Keyboard ===== */
     .controls{
       width:100%;
       display:grid;
       gap: clamp(6px, 1.2vh, 10px);
     }
-    .inputRow{
-      display:grid;
-      grid-template-columns: 1fr auto;
-      gap:10px;
-      width:100%;
-    }
-
-    input{
-      width:100%;
-      padding: clamp(10px, 1.8vh, 14px);
-      border:1px solid var(--border);
-      border-radius:14px;
-      font-size:16px;
-      outline:none;
-      text-transform:uppercase;
-      letter-spacing:.8px;
-      background:#fff;
-    }
-    input:focus{ border-color:#c7c7c7; }
-
-    button{
-      padding: clamp(10px, 1.8vh, 14px) 16px;
-      border:1px solid var(--border);
-      border-radius:14px;
-      background:#111;
-      color:#fff;
-      font-weight:800;
-      font-size:15px;
-      cursor:pointer;
-      transition: transform 120ms ease, opacity 120ms ease;
-      white-space:nowrap;
-    }
-    button:active{ transform: scale(.98); }
-    button:disabled{ opacity:.5; cursor:not-allowed; }
 
     .msg{
       min-height: 18px;
       font-weight:800;
       font-size: clamp(12px, 1.6vh, 14px);
-      color: #111;
+      color:#111;
     }
 
     .footer{
       font-size: 12px;
       color: var(--muted);
     }
+
+    /* On-screen keyboard */
+    .kb{
+      width:100%;
+      display:grid;
+      gap: 8px;
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action: manipulation;
+    }
+    .kbRow{
+      display:grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 6px;
+    }
+    .kbRow.second{ grid-template-columns: repeat(9, 1fr); padding: 0 10px; }
+    .kbRow.third{
+      grid-template-columns: 1.35fr repeat(7, 1fr) 1.35fr;
+    }
+
+    .key{
+      border:1px solid var(--border);
+      background:#f3f4f6;
+      color:#111;
+      border-radius: 12px;
+      padding: 12px 0;
+      font-weight: 900;
+      font-size: 14px;
+      text-align:center;
+      cursor:pointer;
+      transition: transform 90ms ease, opacity 120ms ease;
+    }
+    .key:active{ transform: scale(.98); }
+    .key.wide{ padding: 12px 0; }
+
+    /* key coloring */
+    .key.green{ background: var(--green); border-color: var(--green); color:#fff; }
+    .key.yellow{ background: var(--yellow); border-color: var(--yellow); color:#111; }
+    .key.gray{ background: var(--gray); border-color: var(--gray); color:#fff; }
+
+    /* prevent accidental zoom on iOS by ensuring minimum font-size on tap */
+    .key, .msg, .footer { -webkit-text-size-adjust: 100%; }
 
     /* ===== MODAL ===== */
     .modalOverlay{
@@ -170,7 +229,6 @@
       text-align:center;
       display:grid;
       gap: 10px;
-      position: relative;
     }
     .modal h2{
       margin:0;
@@ -200,12 +258,18 @@
       color:#111;
       border:1px solid var(--border);
     }
+    button.modalBtn{
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-weight: 900;
+      font-size: 15px;
+      cursor:pointer;
+    }
 
-    /* Small heights: tighten more */
-    @media (max-height: 700px){
-      .modal{ padding: 14px; gap: 8px; }
-      .modal .word{ font-size: 24px; }
-      .board{ padding: 10px; }
+    @media (max-height: 720px){
+      .key{ padding: 10px 0; }
+      .kb{ gap: 6px; }
+      .kbRow{ gap: 5px; }
     }
   </style>
 </head>
@@ -219,13 +283,48 @@
       <section class="board" id="board" aria-label="Spielbrett"></section>
 
       <section class="controls">
-        <div class="inputRow">
-          <input id="guess" maxlength="4" inputmode="text" autocomplete="off" autocapitalize="characters"
-                 placeholder="TIPPE 4 BUCHSTABEN" aria-label="Dein Versuch" />
-          <button id="submit" disabled>OK</button>
-        </div>
         <div class="msg" id="msg" aria-live="polite"></div>
         <div class="footer" id="dictStatus">Wörterbuch wird geladen …</div>
+
+        <!-- On-screen keyboard -->
+        <div class="kb" id="keyboard" aria-label="Tastatur">
+          <div class="kbRow first">
+            <div class="key" data-key="Q">Q</div>
+            <div class="key" data-key="W">W</div>
+            <div class="key" data-key="E">E</div>
+            <div class="key" data-key="R">R</div>
+            <div class="key" data-key="T">T</div>
+            <div class="key" data-key="Z">Z</div>
+            <div class="key" data-key="U">U</div>
+            <div class="key" data-key="I">I</div>
+            <div class="key" data-key="O">O</div>
+            <div class="key" data-key="P">P</div>
+          </div>
+
+          <div class="kbRow second">
+            <div class="key" data-key="A">A</div>
+            <div class="key" data-key="S">S</div>
+            <div class="key" data-key="D">D</div>
+            <div class="key" data-key="F">F</div>
+            <div class="key" data-key="G">G</div>
+            <div class="key" data-key="H">H</div>
+            <div class="key" data-key="J">J</div>
+            <div class="key" data-key="K">K</div>
+            <div class="key" data-key="L">L</div>
+          </div>
+
+          <div class="kbRow third">
+            <div class="key wide" data-key="ENTER">Enter</div>
+            <div class="key" data-key="Y">Y</div>
+            <div class="key" data-key="X">X</div>
+            <div class="key" data-key="C">C</div>
+            <div class="key" data-key="V">V</div>
+            <div class="key" data-key="B">B</div>
+            <div class="key" data-key="N">N</div>
+            <div class="key" data-key="M">M</div>
+            <div class="key wide" data-key="BACKSPACE">⌫</div>
+          </div>
+        </div>
       </section>
     </main>
   </div>
@@ -233,13 +332,13 @@
   <!-- Modal -->
   <div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Ergebnis">
     <div class="modal">
-      <h2 id="modalTitle">Geschafft! 🎉</h2>
-      <p class="sub" id="modalText">Happy Birthday ❤️</p>
+      <h2>Geschafft! 🎉</h2>
+      <p class="sub">Happy Birthday ❤️</p>
       <div class="word" id="modalWord">PRIM</div>
 
       <div class="btnRow">
-        <button class="btnLight" id="playAgain">Nochmal</button>
-        <button id="closeModal">Schließen</button>
+        <button class="modalBtn btnLight" id="playAgain">Nochmal</button>
+        <button class="modalBtn" id="closeModal" style="background:#111;color:#fff;border:1px solid var(--border);">Schließen</button>
       </div>
     </div>
   </div>
@@ -250,42 +349,69 @@
     const WORD_LEN = 4;
     const MAX_TRIES = 6;
 
-    // Always allowed words (insider etc.)
+    // Always allow insider word(s)
     const ALWAYS_ALLOWED = new Set([ANSWER]);
+
+    // If you want shake even for "valid but wrong", set true:
+    const SHAKE_ON_WRONG_GUESS = false;
 
     // ===== State =====
     let tryIndex = 0;
     let isOver = false;
+    let isBusy = false; // prevent double-enter during flip
 
-    // Dictionary
     let DICT = new Set();
     let dictReady = false;
+
+    // Typed letters for current row (using onscreen keyboard)
+    let current = "";
+
+    // Track best color for each keyboard letter (green > yellow > gray)
+    const keyState = new Map(); // letter -> "green"|"yellow"|"gray"
 
     // ===== DOM =====
     const boardEl = document.getElementById("board");
     const msgEl = document.getElementById("msg");
-    const inputEl = document.getElementById("guess");
-    const btnEl = document.getElementById("submit");
     const dictStatusEl = document.getElementById("dictStatus");
+    const kbEl = document.getElementById("keyboard");
 
-    // Modal DOM
     const overlay = document.getElementById("modalOverlay");
     const playAgainBtn = document.getElementById("playAgain");
     const closeModalBtn = document.getElementById("closeModal");
     const modalWordEl = document.getElementById("modalWord");
 
-    // ===== Build board =====
-    const tiles = [];
+    // ===== Build board (6 rows x 4 tiles) =====
+    const rows = [];  // row elements
+    const tiles = []; // tiles[r][c] => tile wrapper
     for (let r = 0; r < MAX_TRIES; r++) {
       const row = document.createElement("div");
       row.className = "row";
+      rows.push(row);
+
       const rowTiles = [];
       for (let c = 0; c < WORD_LEN; c++) {
-        const t = document.createElement("div");
-        t.className = "tile";
-        row.appendChild(t);
-        rowTiles.push(t);
+        const tile = document.createElement("div");
+        tile.className = "tile";
+
+        const inner = document.createElement("div");
+        inner.className = "tileInner";
+
+        const front = document.createElement("div");
+        front.className = "face front";
+        front.textContent = "";
+
+        const back = document.createElement("div");
+        back.className = "face back";
+        back.textContent = "";
+
+        inner.appendChild(front);
+        inner.appendChild(back);
+        tile.appendChild(inner);
+
+        row.appendChild(tile);
+        rowTiles.push(tile);
       }
+
       boardEl.appendChild(row);
       tiles.push(rowTiles);
     }
@@ -298,7 +424,13 @@
       .replace(/[^A-ZÄÖÜ]/g, "")
       .slice(0, WORD_LEN);
 
+    function isValidWord(w) {
+      if (ALWAYS_ALLOWED.has(w)) return true;
+      return dictReady && DICT.has(w);
+    }
+
     function evaluateGuess(guess, answer) {
+      // Proper Wordle-like duplicate handling
       const result = Array(WORD_LEN).fill("gray");
       const answerArr = answer.split("");
       const guessArr = guess.split("");
@@ -323,35 +455,40 @@
       return result;
     }
 
-    function paintRow(rowIdx, guess, colors) {
+    function setTileText(r, c, ch) {
+      const tile = tiles[r][c];
+      const front = tile.querySelector(".front");
+      const back = tile.querySelector(".back");
+      front.textContent = ch || "";
+      back.textContent  = ch || "";
+    }
+
+    function clearTileClasses(tile) {
+      tile.classList.remove("green","yellow","gray","revealing","pop");
+    }
+
+    function paintRowTyping() {
+      // show current letters in current row
       for (let c = 0; c < WORD_LEN; c++) {
-        const tile = tiles[rowIdx][c];
-        tile.textContent = (guess[c] || "").trim();
-
-        tile.classList.remove("green","yellow","gray","pop");
-        requestAnimationFrame(() => {
-          tile.classList.add("pop");
-          setTimeout(() => tile.classList.remove("pop"), 140);
-        });
-
-        if (colors && colors[c]) tile.classList.add(colors[c]);
+        const ch = current[c] || "";
+        const tile = tiles[tryIndex][c];
+        // do not overwrite revealed colors on past rows
+        if (tile.classList.contains("green") || tile.classList.contains("yellow") || tile.classList.contains("gray")) continue;
+        setTileText(tryIndex, c, ch);
       }
     }
 
-    function clearBoard() {
-      for (let r = 0; r < MAX_TRIES; r++) {
-        for (let c = 0; c < WORD_LEN; c++) {
-          const tile = tiles[r][c];
-          tile.textContent = "";
-          tile.classList.remove("green","yellow","gray","pop");
-        }
-      }
+    function shakeRow(r) {
+      const row = rows[r];
+      row.classList.remove("shake");
+      // force reflow
+      void row.offsetWidth;
+      row.classList.add("shake");
     }
 
-    function openModal(wordToShow = ANSWER) {
-      modalWordEl.textContent = wordToShow;
+    function openModal() {
+      modalWordEl.textContent = ANSWER;
       overlay.classList.add("show");
-      // prevent any accidental scroll/interaction
       document.body.style.overflow = "hidden";
     }
 
@@ -362,27 +499,96 @@
 
     function endGame(win) {
       isOver = true;
-      inputEl.disabled = true;
-      btnEl.disabled = true;
+      if (win) openModal();
+      else setMsg(`Leider nein 😈 Das Wort war: ${ANSWER}`);
+    }
 
-      if (win) {
-        setMsg("");
-        openModal(ANSWER);
-      } else {
-        // Optional: You can also show a modal on lose if you want.
-        setMsg(`Leider nein 😈 Das Wort war: ${ANSWER}`);
+    function resetGame() {
+      tryIndex = 0;
+      isOver = false;
+      isBusy = false;
+      current = "";
+      keyState.clear();
+      setMsg("");
+      updateKeyboardVisuals(true);
+
+      // clear board
+      for (let r = 0; r < MAX_TRIES; r++) {
+        rows[r].classList.remove("shake");
+        for (let c = 0; c < WORD_LEN; c++) {
+          const tile = tiles[r][c];
+          clearTileClasses(tile);
+          setTileText(r, c, "");
+        }
       }
     }
 
-    function isValidWord(w) {
-      if (ALWAYS_ALLOWED.has(w)) return true;
-      return dictReady && DICT.has(w);
+    // Keyboard coloring priority: green > yellow > gray
+    function mergeKeyState(letter, color) {
+      const prev = keyState.get(letter);
+      const rank = (x) => x === "green" ? 3 : x === "yellow" ? 2 : x === "gray" ? 1 : 0;
+      if (rank(color) > rank(prev)) keyState.set(letter, color);
+    }
+
+    function updateKeyboardVisuals(reset=false) {
+      const keys = kbEl.querySelectorAll(".key");
+      keys.forEach(k => {
+        if (reset) k.classList.remove("green","yellow","gray");
+        const key = k.getAttribute("data-key");
+        if (!key || key.length !== 1) return;
+        const state = keyState.get(key);
+        k.classList.remove("green","yellow","gray");
+        if (state) k.classList.add(state);
+      });
+    }
+
+    async function revealRowWithFlip(r, guess, colors) {
+      isBusy = true;
+
+      // Apply flip per tile with delay; set color mid-flip (when it "turns")
+      const perDelay = 120;
+      const midFlip = 260; // roughly half of 520ms transition
+
+      for (let c = 0; c < WORD_LEN; c++) {
+        const tile = tiles[r][c];
+        const letter = guess[c];
+
+        // lock letter on both faces
+        setTileText(r, c, letter);
+
+        // schedule reveal
+        const delay = c * perDelay;
+
+        setTimeout(() => {
+          // start flip
+          tile.classList.add("revealing");
+
+          // set color around mid flip
+          setTimeout(() => {
+            tile.classList.add(colors[c]);
+            // update keyboard
+            mergeKeyState(letter, colors[c]);
+            updateKeyboardVisuals();
+          }, midFlip);
+
+          // end flip state (so repeated transforms don't stack)
+          setTimeout(() => {
+            tile.classList.remove("revealing");
+          }, 520);
+        }, delay);
+      }
+
+      // wait for all animations to finish
+      const total = (WORD_LEN - 1) * perDelay + 520 + 40;
+      await new Promise(res => setTimeout(res, total));
+
+      isBusy = false;
     }
 
     // ===== Dictionary loading =====
     async function loadDictionary() {
       try {
-        // If your file is named differently, change this:
+        // change file name here if needed:
         const res = await fetch("words4.txt", { cache: "no-store" }); // or "words.txt"
         if (!res.ok) throw new Error("HTTP " + res.status);
 
@@ -396,7 +602,6 @@
 
         dictReady = true;
         dictStatusEl.textContent = `Wörterbuch geladen (${DICT.size} Wörter).`;
-        btnEl.disabled = false;
       } catch (e) {
         dictReady = false;
         dictStatusEl.textContent = "Wörterbuch konnte nicht geladen werden (Datei fehlt?).";
@@ -405,67 +610,115 @@
     }
     loadDictionary();
 
-    // ===== Input UX =====
-    inputEl.addEventListener("input", () => {
-      const v = sanitize(inputEl.value);
-      if (inputEl.value !== v) inputEl.value = v;
-
-      if (!isOver) {
-        // show preview in current row while typing
-        paintRow(tryIndex, v.padEnd(WORD_LEN, " "), null);
+    // ===== Input handlers (physical keyboard) =====
+    document.addEventListener("keydown", (e) => {
+      if (overlay.classList.contains("show")) {
+        if (e.key === "Escape") closeModal();
+        return;
       }
+      if (isOver || isBusy) return;
+
+      const k = e.key;
+
+      if (k === "Enter") { submit(); return; }
+      if (k === "Backspace") { backspace(); return; }
+
+      const letter = sanitize(k);
+      if (letter.length === 1) addLetter(letter);
     });
 
-    function submit() {
-      if (isOver) return;
-      if (!dictReady) { setMsg("Wörterbuch lädt noch …"); return; }
+    // ===== On-screen keyboard =====
+    kbEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".key");
+      if (!btn) return;
+      if (overlay.classList.contains("show")) return;
+      if (isOver || isBusy) return;
 
-      const guess = sanitize(inputEl.value);
+      const key = btn.getAttribute("data-key");
+      if (!key) return;
 
-      if (guess.length !== WORD_LEN) { setMsg(`Bitte genau ${WORD_LEN} Buchstaben.`); return; }
-      if (!isValidWord(guess)) { setMsg("Das ist kein gültiges deutsches Wort."); return; }
+      if (key === "ENTER") submit();
+      else if (key === "BACKSPACE") backspace();
+      else if (key.length === 1) addLetter(key);
+    });
+
+    // ===== Letter editing =====
+    function addLetter(ch) {
+      if (current.length >= WORD_LEN) return;
+      current += ch;
+      // small pop effect on next tile
+      const idx = current.length - 1;
+      const tile = tiles[tryIndex][idx];
+      tile.classList.add("pop");
+      setTimeout(() => tile.classList.remove("pop"), 90);
+
+      paintRowTyping();
+    }
+
+    function backspace() {
+      if (current.length === 0) return;
+      current = current.slice(0, -1);
+      paintRowTyping();
+      // clear last tile char visually
+      const idx = current.length;
+      setTileText(tryIndex, idx, "");
+    }
+
+    // ===== Submit guess =====
+    async function submit() {
+      if (isOver || isBusy) return;
+      if (!dictReady) { setMsg("Wörterbuch lädt noch …"); shakeRow(tryIndex); return; }
+
+      const guess = current;
+
+      if (guess.length !== WORD_LEN) {
+        setMsg(`Bitte genau ${WORD_LEN} Buchstaben.`);
+        shakeRow(tryIndex);
+        return;
+      }
+
+      if (!isValidWord(guess)) {
+        setMsg("Das ist kein gültiges deutsches Wort.");
+        shakeRow(tryIndex);
+        return;
+      }
 
       setMsg("");
       const colors = evaluateGuess(guess, ANSWER);
-      paintRow(tryIndex, guess, colors);
 
-      if (guess === ANSWER) { endGame(true); return; }
+      // Flip reveal animation
+      await revealRowWithFlip(tryIndex, guess, colors);
+
+      if (guess === ANSWER) {
+        endGame(true);
+        return;
+      } else if (SHAKE_ON_WRONG_GUESS) {
+        shakeRow(tryIndex);
+      }
 
       tryIndex++;
-      inputEl.value = "";
+      current = "";
 
       if (tryIndex >= MAX_TRIES) {
         endGame(false);
       } else {
-        paintRow(tryIndex, " ".repeat(WORD_LEN), null);
+        // prepare next row visuals
+        paintRowTyping();
       }
     }
-
-    btnEl.addEventListener("click", submit);
-    inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
 
     // ===== Modal controls =====
     closeModalBtn.addEventListener("click", closeModal);
     playAgainBtn.addEventListener("click", () => {
       closeModal();
-      // reset game
-      tryIndex = 0;
-      isOver = false;
-      clearBoard();
-      inputEl.disabled = false;
-      btnEl.disabled = false;
-      inputEl.value = "";
-      setMsg("");
-      setTimeout(() => inputEl.focus(), 80);
+      resetGame();
     });
-
-    // click outside modal closes
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) closeModal();
     });
 
-    // initial focus
-    setTimeout(() => inputEl.focus(), 200);
+    // Init
+    resetGame();
   </script>
 </body>
 </html>
