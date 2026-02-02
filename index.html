@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Begriffel – PRIM</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #111111;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --tile: #ffffff;
+
+      --green: #22c55e;
+      --yellow: #eab308;
+      --gray: #9ca3af;
+
+      --radius: 18px;
+      --tile-radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+
+    .wrap {
+      width: min(520px, 100%);
+      display: grid;
+      gap: 14px;
+      justify-items: center;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0.2px;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .board {
+      width: 100%;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .tile {
+      aspect-ratio: 1 / 1;
+      border: 2px solid var(--border);
+      border-radius: var(--tile-radius);
+      background: var(--tile);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: clamp(22px, 6vw, 34px);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      user-select: none;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+    }
+
+    .tile.pop { transform: scale(1.04); }
+
+    .tile.green { background: var(--green); border-color: var(--green); color: #fff; }
+    .tile.yellow { background: var(--yellow); border-color: var(--yellow); color: #111; }
+    .tile.gray { background: var(--gray); border-color: var(--gray); color: #fff; }
+
+    .controls {
+      width: 100%;
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr;
+      align-items: center;
+    }
+
+    .inputRow {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      width: 100%;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 16px;
+      outline: none;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    input:focus { border-color: #c7c7c7; }
+
+    button {
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #111;
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 120ms ease, opacity 120ms ease;
+    }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .msg {
+      min-height: 22px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .footer {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .success {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      width: 100%;
+      display: none;
+      gap: 8px;
+      background: #fff;
+    }
+    .success.show { display: grid; }
+
+    .success .big {
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    /* Mobile: keep everything on screen */
+    @media (max-height: 720px) {
+      .board { padding: 12px; }
+      .row { gap: 8px; }
+      .tile { border-radius: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Begriffel</h1>
+    <p>4 Buchstaben. 6 Versuche. Nur für euch. 🤝</p>
+
+    <section class="board" id="board" aria-label="Spielbrett">
+      <!-- 6 rows x 4 tiles -->
+    </section>
+
+    <section class="success" id="success">
+      <div class="big">🎉 Yes! Du hast es!</div>
+      <div>Das Wort war: <strong>PRIM</strong></div>
+      <div class="footer">Happy Birthday ❤️</div>
+    </section>
+
+    <section class="controls">
+      <div class="inputRow">
+        <input id="guess" maxlength="4" inputmode="text" autocomplete="off" autocapitalize="characters"
+               placeholder="TIPPE 4 BUCHSTABEN" aria-label="Dein Versuch" />
+        <button id="submit">OK</button>
+      </div>
+      <div class="msg" id="msg" aria-live="polite"></div>
+      <div class="footer">Tipp: Du kannst auch Enter drücken.</div>
+    </section>
+  </main>
+
+  <script>
+    // ===== Config =====
+    const ANSWER = "PRIM"; // <-- dein Insider-Wort
+    const WORD_LEN = 4;
+    const MAX_TRIES = 6;
+
+    // ===== State =====
+    let tryIndex = 0;
+    let isOver = false;
+
+    // ===== Build board =====
+    const boardEl = document.getElementById("board");
+    const successEl = document.getElementById("success");
+    const msgEl = document.getElementById("msg");
+    const inputEl = document.getElementById("guess");
+    const btnEl = document.getElementById("submit");
+
+    const tiles = []; // tiles[row][col]
+    for (let r = 0; r < MAX_TRIES; r++) {
+      const row = document.createElement("div");
+      row.className = "row";
+      const rowTiles = [];
+      for (let c = 0; c < WORD_LEN; c++) {
+        const t = document.createElement("div");
+        t.className = "tile";
+        t.textContent = "";
+        row.appendChild(t);
+        rowTiles.push(t);
+      }
+      boardEl.appendChild(row);
+      tiles.push(rowTiles);
+    }
+
+    // ===== Helpers =====
+    const setMsg = (text) => { msgEl.textContent = text || ""; };
+
+    const sanitize = (v) => (v || "")
+      .toUpperCase()
+      .replace(/[^A-ZÄÖÜ]/g, "") // keep it simple; if you want only A-Z: /[^A-Z]/g
+      .slice(0, WORD_LEN);
+
+    function evaluateGuess(guess, answer) {
+      // Wordle-like evaluation with duplicates handled correctly
+      const result = Array(WORD_LEN).fill("gray");
+      const answerArr = answer.split("");
+      const guessArr = guess.split("");
+
+      // Mark greens first
+      for (let i = 0; i < WORD_LEN; i++) {
+        if (guessArr[i] === answerArr[i]) {
+          result[i] = "green";
+          answerArr[i] = null; // consume
+          guessArr[i] = null;
+        }
+      }
+      // Then yellows
+      for (let i = 0; i < WORD_LEN; i++) {
+        if (guessArr[i] == null) continue;
+        const idx = answerArr.indexOf(guessArr[i]);
+        if (idx !== -1) {
+          result[i] = "yellow";
+          answerArr[idx] = null; // consume
+        }
+      }
+      return result;
+    }
+
+    function paintRow(rowIdx, guess, colors) {
+      for (let c = 0; c < WORD_LEN; c++) {
+        const tile = tiles[rowIdx][c];
+        tile.textContent = guess[c] || "";
+        tile.classList.remove("green", "yellow", "gray", "pop");
+        // little pop
+        requestAnimationFrame(() => {
+          tile.classList.add("pop");
+          setTimeout(() => tile.classList.remove("pop"), 140);
+        });
+        if (colors && colors[c]) tile.classList.add(colors[c]);
+      }
+    }
+
+    function endGame(win) {
+      isOver = true;
+      inputEl.disabled = true;
+      btnEl.disabled = true;
+      if (win) {
+        successEl.classList.add("show");
+        setMsg("");
+      } else {
+        setMsg(`Leider nein 😈 Das Wort war: ${ANSWER}`);
+      }
+    }
+
+    // ===== Input UX =====
+    inputEl.addEventListener("input", () => {
+      const v = sanitize(inputEl.value);
+      if (inputEl.value !== v) inputEl.value = v;
+      // show letters in current row while typing
+      if (!isOver) paintRow(tryIndex, v.padEnd(WORD_LEN, " "), null);
+    });
+
+    function submit() {
+      if (isOver) return;
+      const guess = sanitize(inputEl.value);
+
+      if (guess.length !== WORD_LEN) {
+        setMsg(`Bitte genau ${WORD_LEN} Buchstaben.`);
+        return;
+      }
+
+      setMsg("");
+      const colors = evaluateGuess(guess, ANSWER);
+      paintRow(tryIndex, guess, colors);
+
+      if (guess === ANSWER) {
+        endGame(true);
+        return;
+      }
+
+      tryIndex++;
+      inputEl.value = "";
+      if (tryIndex >= MAX_TRIES) {
+        endGame(false);
+      } else {
+        // keep typing preview clean
+        paintRow(tryIndex, " ".repeat(WORD_LEN), null);
+      }
+    }
+
+    btnEl.addEventListener("click", submit);
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") submit();
+    });
+
+    // initial focus (mobile friendly)
+    setTimeout(() => inputEl.focus(), 200);
+  </script>
+</body>
+</html>
