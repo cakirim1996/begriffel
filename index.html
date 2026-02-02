@@ -20,16 +20,20 @@
       --tile-radius:14px;
       --shadow: 0 20px 60px rgba(0,0,0,.12);
 
+      /* Layout tuning */
       --maxWrap: 680px;
 
+      /* Tile sizing (computed via JS) */
       --gap: 10px;
       --boardPad: 14px;
       --tileSize: 64px;
       --tileFont: 28px;
 
+      /* Keyboard */
       --keyH: 44px;
       --keyGap: 8px;
 
+      /* Extra spacing control */
       --stagePadY: 12px;
       --stagePadX: 12px;
     }
@@ -41,9 +45,10 @@
       background:var(--bg);
       color:var(--text);
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-      overflow:hidden;
+      overflow:hidden; /* no scroll */
     }
 
+    /* ===== Main layout ===== */
     .stage{
       height:100dvh;
       padding:
@@ -95,6 +100,7 @@
       min-height: 0;
     }
 
+    /* ===== Board ===== */
     .board{
       width:100%;
       border:1px solid var(--border);
@@ -132,7 +138,7 @@
       perspective: 900px;
       border-radius: var(--tile-radius);
       user-select:none;
-      overflow:hidden; /* wichtig: damit Vollfarbe clean bleibt */
+      overflow:hidden; /* ensures full fill looks clean */
     }
 
     .tileInner{
@@ -148,7 +154,10 @@
       text-transform:uppercase;
       background:#fff;
       transform-style: preserve-3d;
-      transition: transform 700ms cubic-bezier(.18,.9,.22,1), border-color 220ms ease, background-color 220ms ease;
+      transition:
+        transform 700ms cubic-bezier(.18,.9,.22,1),
+        border-color 220ms ease,
+        background-color 220ms ease;
     }
 
     .tile.revealing .tileInner{ transform: rotateX(180deg); }
@@ -165,32 +174,33 @@
     .front{ background:#fff; color:var(--text); }
     .back{ transform: rotateX(180deg); color:#fff; }
 
-  /* ===== Vollflächige Farben (wie echtes Begriffel/Wordle) ===== */
-.tile.green .tileInner{
-  border-color: var(--green);
-  background: var(--green);
-  color:#fff;
-}
-.tile.yellow .tileInner{
-  border-color: var(--yellow);
-  background: var(--yellow);
-  color:#111;
-}
-.tile.gray .tileInner{
-  border-color: var(--gray);
-  background: var(--gray);
-  color:#fff;
-}
+    /* ===== Full-fill colors like real Wordle ===== */
+    .tile.green .tileInner{
+      border-color: var(--green);
+      background: var(--green);
+      color:#fff;
+    }
+    .tile.yellow .tileInner{
+      border-color: var(--yellow);
+      background: var(--yellow);
+      color:#111;
+    }
+    .tile.gray .tileInner{
+      border-color: var(--gray);
+      background: var(--gray);
+      color:#fff;
+    }
+    /* Prevent faces from painting over the filled background */
+    .tile.green .front, .tile.green .back,
+    .tile.yellow .front, .tile.yellow .back,
+    .tile.gray .front, .tile.gray .back{
+      background: transparent;
+      color: inherit;
+    }
 
-/* Faces sollen NICHT ihre eigene weiße Fläche drüberlegen */
-.tile.green .front, .tile.green .back,
-.tile.yellow .front, .tile.yellow .back,
-.tile.gray .front, .tile.gray .back{
-  background: transparent;
-  color: inherit;
-}
     .tile.pop .tileInner{ transform: scale(1.03); }
 
+    /* ===== Status ===== */
     .status{
       width:100%;
       display:grid;
@@ -207,6 +217,7 @@
       color: var(--muted);
     }
 
+    /* ===== Keyboard ===== */
     .kb{
       width:100%;
       display:grid;
@@ -243,6 +254,7 @@
     .key.yellow{ background: var(--yellow); border-color: var(--yellow); color:#111; }
     .key.gray{ background: var(--gray); border-color: var(--gray); color:#fff; }
 
+    /* ===== Modal ===== */
     .modalOverlay{
       position:fixed;
       inset:0;
@@ -280,6 +292,7 @@
     .btnLight{ background:#fff; color:#111; }
     .btnDark{ background:#111; color:#fff; }
 
+    /* ===== DEVICE TUNING ===== */
     @media (max-width: 520px){
       :root{
         --gap: 9px;
@@ -346,6 +359,7 @@
     </main>
   </div>
 
+  <!-- Modal -->
   <div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Ergebnis">
     <div class="modal">
       <h2>Geschafft! 🎉</h2>
@@ -376,7 +390,7 @@
     let DICT = new Set();
     let dictReady = false;
 
-    const keyState = new Map();
+    const keyState = new Map(); // letter -> best color
 
     // ===== DOM =====
     const headerEl = document.getElementById("header");
@@ -425,6 +439,7 @@
       tiles.push(rowTiles);
     }
 
+    // ===== Responsive tile sizing =====
     function setVar(name, value){ document.documentElement.style.setProperty(name, value); }
 
     function recalcSizes(){
@@ -458,8 +473,8 @@
 
         const tileH = Math.floor((availableForBoard - (boardPad * 2) - (gap * (MAX_TRIES - 1))) / MAX_TRIES);
 
-        let tileSize = Math.max(44, Math.min(tileW, tileH, isMobile ? 70 : 84));
-        let font = Math.max(18, Math.floor(tileSize * 0.44));
+        const tileSize = Math.max(44, Math.min(tileW, tileH, isMobile ? 70 : 84));
+        const font = Math.max(18, Math.floor(tileSize * 0.44));
 
         setVar("--boardPad", boardPad + "px");
         setVar("--gap", gap + "px");
@@ -475,7 +490,7 @@
     // ===== Helpers =====
     const setMsg = (t) => { msgEl.textContent = t || ""; };
 
-    const sanitize = (v) => (v || "")
+    const sanitizeInput = (v) => (v || "")
       .toUpperCase()
       .replace(/[^A-ZÄÖÜ]/g, "")
       .slice(0, WORD_LEN);
@@ -484,13 +499,11 @@
       .toUpperCase()
       .replace(/[^A-ZÄÖÜ]/g, "");
 
-    // ✅ FIX 3: garantiert EXAKT 4 Buchstaben, kein Prefix-Match, kein Trim-Trick
-   function isValidWord(w) {
-  if (w.length !== WORD_LEN) return false;
-  if (ALWAYS_ALLOWED.has(w)) return true;
-  return dictReady && DICT.has(w);
-}
-
+    function isValidWord(w) {
+      // must be EXACTLY 4 letters
+      if (w.length !== WORD_LEN) return false;
+      if (ALWAYS_ALLOWED.has(w)) return true;
+      return dictReady && DICT.has(w);
     }
 
     function evaluateGuess(guess, answer) {
@@ -597,9 +610,9 @@
       document.body.style.overflow = "hidden";
     }
     function endGame(win) {
-  isOver = true;
-  if (win) openModal();
-  else setMsg(`Leider nein 😈 Das Wort war: ${ANSWER}`);
+      isOver = true;
+      if (win) openModal();
+      else setMsg(`Leider nein 😈 Das Wort war: ${ANSWER}`);
     }
 
     function resetGame() {
@@ -632,13 +645,12 @@
         const lines = text.split(/\r?\n/);
 
         for (const line of lines) {
-  const raw = sanitizeDict(line.trim());     // <- OHNE slice
-  if (raw.length === WORD_LEN) DICT.add(raw); // <- nur exakt 4 rein
-}
-
+          const raw = sanitizeDict(line.trim()); // no slice here!
+          if (raw.length === WORD_LEN) DICT.add(raw);
+        }
 
         dictReady = true;
-dictStatusEl.textContent = `Wörterbuch geladen (${DICT.size} Wörter).`;
+        dictStatusEl.textContent = `Wörterbuch geladen (${DICT.size} Wörter).`;
       } catch (e) {
         dictReady = false;
         dictStatusEl.textContent = "Wörterbuch konnte nicht geladen werden (Datei fehlt?).";
@@ -675,7 +687,7 @@ dictStatusEl.textContent = `Wörterbuch geladen (${DICT.size} Wörter).`;
       if (!dictReady) { setMsg("Wörterbuch lädt noch …"); shakeRow(tryIndex); return; }
 
       const guess = current;
-if (guess.length !== WORD_LEN) { setMsg(`Bitte genau ${WORD_LEN} Buchstaben.`); shakeRow(tryIndex); return; }
+      if (guess.length !== WORD_LEN) { setMsg(`Bitte genau ${WORD_LEN} Buchstaben.`); shakeRow(tryIndex); return; }
       if (!isValidWord(guess)) { setMsg("Das ist kein gültiges deutsches Wort."); shakeRow(tryIndex); return; }
 
       setMsg("");
@@ -692,6 +704,7 @@ if (guess.length !== WORD_LEN) { setMsg(`Bitte genau ${WORD_LEN} Buchstaben.`); 
       else paintRowTyping();
     }
 
+    // Physical keyboard
     document.addEventListener("keydown", (e) => {
       if (overlay.classList.contains("show")) {
         if (e.key === "Escape") closeModal();
@@ -702,10 +715,11 @@ if (guess.length !== WORD_LEN) { setMsg(`Bitte genau ${WORD_LEN} Buchstaben.`); 
       if (e.key === "Enter") return submit();
       if (e.key === "Backspace") return backspace();
 
-      const letter = sanitize(e.key);
+      const letter = sanitizeInput(e.key);
       if (letter.length === 1) addLetter(letter);
     });
 
+    // On-screen keyboard
     kbEl.addEventListener("click", (e) => {
       const btn = e.target.closest(".key");
       if (!btn) return;
@@ -720,6 +734,7 @@ if (guess.length !== WORD_LEN) { setMsg(`Bitte genau ${WORD_LEN} Buchstaben.`); 
       else if (key.length === 1) addLetter(key);
     });
 
+    // Modal buttons
     closeModalBtn.addEventListener("click", closeModal);
     playAgainBtn.addEventListener("click", () => {
       closeModal();
