@@ -21,9 +21,9 @@
       --shadow: 0 20px 60px rgba(0,0,0,.12);
 
       /* Layout tuning */
-      --maxWrap: 620px;
+      --maxWrap: 680px;
 
-      /* Tile sizing (computed per device below) */
+      /* Tile sizing (computed via JS) */
       --gap: 10px;
       --boardPad: 14px;
       --tileSize: 64px;
@@ -32,6 +32,10 @@
       /* Keyboard */
       --keyH: 44px;
       --keyGap: 8px;
+
+      /* Extra spacing control */
+      --stagePadY: 12px;
+      --stagePadX: 12px;
     }
 
     *{box-sizing:border-box}
@@ -44,27 +48,29 @@
       overflow:hidden; /* no scroll */
     }
 
-    /* ===== Main layout: header / game / keyboard ===== */
+    /* ===== Main layout ===== */
     .stage{
       height:100dvh;
       padding:
-        calc(10px + env(safe-area-inset-top))
-        calc(12px + env(safe-area-inset-right))
-        calc(12px + env(safe-area-inset-bottom))
-        calc(12px + env(safe-area-inset-left));
+        calc(var(--stagePadY) + env(safe-area-inset-top))
+        calc(var(--stagePadX) + env(safe-area-inset-right))
+        calc(var(--stagePadY) + env(safe-area-inset-bottom))
+        calc(var(--stagePadX) + env(safe-area-inset-left));
       display:grid;
       place-items:center;
     }
 
+    /* On desktop: don't force full height feeling; keep centered & contained */
     .wrap{
       width:min(var(--maxWrap), 100%);
       height:100%;
-      max-height: 900px;
+      max-height: 980px;
       display:grid;
       grid-template-rows: auto 1fr auto;
       gap: 10px;
       justify-items:center;
       text-align:center;
+      min-height: 0;
     }
 
     header{
@@ -93,7 +99,7 @@
       grid-template-rows: 1fr auto;
       gap: 10px;
       align-items:center;
-      min-height: 0; /* important for grid shrink */
+      min-height: 0;
     }
 
     /* ===== Board ===== */
@@ -128,7 +134,6 @@
       80% { transform: translateX(8px); }
     }
 
-    /* Flip tiles */
     .tile{
       width: var(--tileSize);
       aspect-ratio: 1/1;
@@ -271,28 +276,33 @@
     .btnDark{ background:#111; color:#fff; }
 
     /* ===== DEVICE TUNING ===== */
-
-    /* Mobile: shrink keyboard + tiles so nothing scrolls */
     @media (max-width: 520px){
       :root{
         --gap: 9px;
         --boardPad: 12px;
         --keyH: 40px;
         --keyGap: 7px;
+        --stagePadY: 10px;
+        --stagePadX: 10px;
       }
       h1{ font-size: 20px; }
       p{ font-size: 13px; }
       .key{ font-size: 13px; border-radius: 11px; }
     }
 
-    /* Desktop: more air */
     @media (min-width: 900px){
       :root{
-        --maxWrap: 720px;
-        --keyH: 46px;
+        --maxWrap: 760px;
+        --keyH: 48px;
+        --stagePadY: 16px;
+        --stagePadX: 16px;
       }
-      h1{ font-size: 24px; }
+      h1{ font-size: 26px; }
       p{ font-size: 14px; }
+      .wrap{
+        /* feels more "desktop app"-like */
+        max-height: 900px;
+      }
     }
   </style>
 </head>
@@ -300,7 +310,7 @@
 <body>
   <div class="stage">
     <main class="wrap" id="wrap">
-      <header>
+      <header id="header">
         <h1>Begriffel</h1>
         <p>4 Buchstaben. 6 Versuche.</p>
       </header>
@@ -308,7 +318,7 @@
       <section class="game">
         <section class="board" id="board" aria-label="Spielbrett"></section>
 
-        <section class="status">
+        <section class="status" id="status">
           <div class="msg" id="msg" aria-live="polite"></div>
           <div class="footer" id="dictStatus">Wörterbuch wird geladen …</div>
         </section>
@@ -316,39 +326,19 @@
 
       <section class="kb" id="keyboard" aria-label="Tastatur">
         <div class="kbRow first">
-          <div class="key" data-key="Q">Q</div>
-          <div class="key" data-key="W">W</div>
-          <div class="key" data-key="E">E</div>
-          <div class="key" data-key="R">R</div>
-          <div class="key" data-key="T">T</div>
-          <div class="key" data-key="Z">Z</div>
-          <div class="key" data-key="U">U</div>
-          <div class="key" data-key="I">I</div>
-          <div class="key" data-key="O">O</div>
-          <div class="key" data-key="P">P</div>
+          <div class="key" data-key="Q">Q</div><div class="key" data-key="W">W</div><div class="key" data-key="E">E</div><div class="key" data-key="R">R</div><div class="key" data-key="T">T</div>
+          <div class="key" data-key="Z">Z</div><div class="key" data-key="U">U</div><div class="key" data-key="I">I</div><div class="key" data-key="O">O</div><div class="key" data-key="P">P</div>
         </div>
 
         <div class="kbRow second">
-          <div class="key" data-key="A">A</div>
-          <div class="key" data-key="S">S</div>
-          <div class="key" data-key="D">D</div>
-          <div class="key" data-key="F">F</div>
-          <div class="key" data-key="G">G</div>
-          <div class="key" data-key="H">H</div>
-          <div class="key" data-key="J">J</div>
-          <div class="key" data-key="K">K</div>
-          <div class="key" data-key="L">L</div>
+          <div class="key" data-key="A">A</div><div class="key" data-key="S">S</div><div class="key" data-key="D">D</div><div class="key" data-key="F">F</div><div class="key" data-key="G">G</div>
+          <div class="key" data-key="H">H</div><div class="key" data-key="J">J</div><div class="key" data-key="K">K</div><div class="key" data-key="L">L</div>
         </div>
 
         <div class="kbRow third">
           <div class="key" data-key="ENTER">Enter</div>
-          <div class="key" data-key="Y">Y</div>
-          <div class="key" data-key="X">X</div>
-          <div class="key" data-key="C">C</div>
-          <div class="key" data-key="V">V</div>
-          <div class="key" data-key="B">B</div>
-          <div class="key" data-key="N">N</div>
-          <div class="key" data-key="M">M</div>
+          <div class="key" data-key="Y">Y</div><div class="key" data-key="X">X</div><div class="key" data-key="C">C</div><div class="key" data-key="V">V</div>
+          <div class="key" data-key="B">B</div><div class="key" data-key="N">N</div><div class="key" data-key="M">M</div>
           <div class="key" data-key="BACKSPACE">⌫</div>
         </div>
       </section>
@@ -390,6 +380,8 @@
 
     // ===== DOM =====
     const wrapEl = document.getElementById("wrap");
+    const headerEl = document.getElementById("header");
+    const statusEl = document.getElementById("status");
     const boardEl = document.getElementById("board");
     const msgEl = document.getElementById("msg");
     const dictStatusEl = document.getElementById("dictStatus");
@@ -434,51 +426,64 @@
       tiles.push(rowTiles);
     }
 
-    // ===== Responsive tile sizing =====
+    // ===== Responsive tile sizing (measures real element sizes) =====
     function setVar(name, value){ document.documentElement.style.setProperty(name, value); }
 
     function recalcSizes(){
-      // Available height is entire viewport. We allocate:
-      // header ~ 72-90px, status ~ 44px, keyboard ~ 3 rows * keyH + gaps, plus padding.
-      const vh = window.innerHeight;
       const vw = window.innerWidth;
-
-      // keyboard estimate
       const isMobile = vw <= 520;
-      const keyH = isMobile ? 40 : 44;
+
+      // set keyboard sizes first (so measurement is correct)
+      const keyH = isMobile ? 40 : (vw >= 900 ? 48 : 44);
       const keyGap = isMobile ? 7 : 8;
-      const kbH = (keyH * 3) + (keyGap * 2) + 24; // + little breathing room
-
-      // header + status estimate
-      const headerH = isMobile ? 72 : 84;
-      const statusH = 46;
-
-      // board padding + gaps
-      const boardPad = isMobile ? 12 : 14;
-      const gap = isMobile ? 9 : 10;
-
-      // remaining height for 6 rows of tiles + 5 gaps + board padding*2
-      const availableForBoard = vh - kbH - headerH - statusH - 24; // extra safety
-      const tileH = Math.floor((availableForBoard - (boardPad * 2) - (gap * (MAX_TRIES - 1))) / MAX_TRIES);
-
-      // width constraint: 4 tiles + 3 gaps + padding*2 must fit wrap width
-      const wrapW = Math.min(vw - 24, (vw >= 900 ? 720 : 620));
-      const tileW = Math.floor((wrapW - (boardPad * 2) - (gap * (WORD_LEN - 1))) / WORD_LEN);
-
-      // pick smallest to avoid overflow
-      let tileSize = Math.max(44, Math.min(tileH, tileW, isMobile ? 68 : 78));
-      let font = Math.max(18, Math.floor(tileSize * 0.44));
-
       setVar("--keyH", keyH + "px");
       setVar("--keyGap", keyGap + "px");
-      setVar("--boardPad", boardPad + "px");
-      setVar("--gap", gap + "px");
-      setVar("--tileSize", tileSize + "px");
-      setVar("--tileFont", font + "px");
+
+      // let layout settle one frame, then measure
+      requestAnimationFrame(() => {
+        const vh = window.innerHeight;
+
+        const headerH = headerEl.getBoundingClientRect().height || (isMobile ? 72 : 84);
+        const statusH = statusEl.getBoundingClientRect().height || 46;
+        const kbH = kbEl.getBoundingClientRect().height || ((keyH * 3) + (keyGap * 2) + 24);
+
+        const stageStyle = getComputedStyle(document.querySelector(".stage"));
+        const stagePadTop = parseFloat(stageStyle.paddingTop) || 0;
+        const stagePadBottom = parseFloat(stageStyle.paddingBottom) || 0;
+
+        // How much vertical space we can give to the board area
+        const availableForBoard =
+          vh
+          - stagePadTop
+          - stagePadBottom
+          - headerH
+          - statusH
+          - kbH
+          - 24; // extra safety margin
+
+        const boardPad = isMobile ? 12 : 14;
+        const gap = isMobile ? 9 : 10;
+
+        // width constraint: 4 tiles + 3 gaps + padding*2 must fit wrap width
+        const wrapW = Math.min(vw - 24, (vw >= 900 ? 760 : 680));
+        const tileW = Math.floor((wrapW - (boardPad * 2) - (gap * (WORD_LEN - 1))) / WORD_LEN);
+
+        // height constraint: 6 tiles + 5 gaps + padding*2 must fit availableForBoard
+        const tileH = Math.floor((availableForBoard - (boardPad * 2) - (gap * (MAX_TRIES - 1))) / MAX_TRIES);
+
+        // choose smallest to avoid overflow
+        let tileSize = Math.max(44, Math.min(tileW, tileH, isMobile ? 70 : 84));
+        let font = Math.max(18, Math.floor(tileSize * 0.44));
+
+        setVar("--boardPad", boardPad + "px");
+        setVar("--gap", gap + "px");
+        setVar("--tileSize", tileSize + "px");
+        setVar("--tileFont", font + "px");
+      });
     }
 
     window.addEventListener("resize", recalcSizes);
-    window.addEventListener("orientationchange", () => setTimeout(recalcSizes, 100));
+    window.addEventListener("orientationchange", () => setTimeout(recalcSizes, 150));
     recalcSizes();
 
     // ===== Helpers =====
@@ -620,12 +625,14 @@
           setTileText(r, c, "");
         }
       }
+      // recalc after reset (helps if fonts/layout changed)
+      recalcSizes();
     }
 
     // ===== Dictionary loading =====
     async function loadDictionary() {
       try {
-        const res = await fetch("words4.txt", { cache: "no-store" }); // <- falls deine Datei anders heißt, hier ändern
+        const res = await fetch("words4.txt", { cache: "no-store" });
         if (!res.ok) throw new Error("HTTP " + res.status);
 
         const text = await res.text();
@@ -642,6 +649,8 @@
         dictReady = false;
         dictStatusEl.textContent = "Wörterbuch konnte nicht geladen werden (Datei fehlt?).";
         setMsg("Fehler: Wortliste nicht gefunden. Lege words4.txt neben index.html.");
+      } finally {
+        recalcSizes();
       }
     }
     loadDictionary();
