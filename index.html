@@ -165,31 +165,30 @@
     .front{ background:#fff; color:var(--text); }
     .back{ transform: rotateX(180deg); color:#fff; }
 
-    /* ✅ FIX 1: Vollflächige Farben wie echtes Wordle */
-    .tile.green .tileInner{
-      border-color: var(--green);
-      background: var(--green);
-      color:#fff;
-    }
-    .tile.yellow .tileInner{
-      border-color: var(--yellow);
-      background: var(--yellow);
-      color:#111;
-    }
-    .tile.gray .tileInner{
-      border-color: var(--gray);
-      background: var(--gray);
-      color:#fff;
-    }
+  /* ===== Vollflächige Farben (wie echtes Begriffel/Wordle) ===== */
+.tile.green .tileInner{
+  border-color: var(--green);
+  background: var(--green);
+  color:#fff;
+}
+.tile.yellow .tileInner{
+  border-color: var(--yellow);
+  background: var(--yellow);
+  color:#111;
+}
+.tile.gray .tileInner{
+  border-color: var(--gray);
+  background: var(--gray);
+  color:#fff;
+}
 
-    /* Faces sollen transparent sein, damit die Inner-Farbe überall durchgeht */
-    .tile.green .front, .tile.green .back,
-    .tile.yellow .front, .tile.yellow .back,
-    .tile.gray .front, .tile.gray .back{
-      background: transparent;
-      color: inherit;
-    }
-
+/* Faces sollen NICHT ihre eigene weiße Fläche drüberlegen */
+.tile.green .front, .tile.green .back,
+.tile.yellow .front, .tile.yellow .back,
+.tile.gray .front, .tile.gray .back{
+  background: transparent;
+  color: inherit;
+}
     .tile.pop .tileInner{ transform: scale(1.03); }
 
     .status{
