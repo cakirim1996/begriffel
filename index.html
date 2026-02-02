@@ -5,166 +5,244 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Begriffel – PRIM</title>
   <style>
-    :root {
-      --bg: #ffffff;
-      --text: #111111;
-      --muted: #6b7280;
-      --border: #e5e7eb;
-      --tile: #ffffff;
+    :root{
+      --bg:#fff;
+      --text:#111;
+      --muted:#6b7280;
+      --border:#e5e7eb;
 
-      --green: #22c55e;
-      --yellow: #eab308;
-      --gray: #9ca3af;
+      --green:#22c55e;
+      --yellow:#eab308;
+      --gray:#9ca3af;
 
-      --radius: 18px;
-      --tile-radius: 14px;
+      --radius:18px;
+      --tile-radius:14px;
+      --shadow: 0 20px 60px rgba(0,0,0,.12);
     }
 
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      display: grid;
-      place-items: center;
-      padding: 18px;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      /* no scroll */
+      overflow:hidden;
     }
 
-    .wrap {
-      width: min(520px, 100%);
-      display: grid;
-      gap: 14px;
-      justify-items: center;
-      text-align: center;
+    /* Fullscreen center without scroll */
+    .stage{
+      height:100dvh; /* dynamic viewport for mobile */
+      padding: clamp(10px, 2.2vh, 18px);
+      display:grid;
+      place-items:center;
     }
 
-    h1 { margin: 0; font-size: 22px; letter-spacing: 0.2px; }
-    p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.35; }
-
-    .board {
-      width: 100%;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px;
-      display: grid;
-      gap: 10px;
+    .wrap{
+      width:min(520px, 100%);
+      display:grid;
+      gap: clamp(8px, 1.6vh, 14px);
+      justify-items:center;
+      text-align:center;
     }
 
-    .row {
-      display: grid;
+    h1{
+      margin:0;
+      font-size: clamp(18px, 2.6vh, 22px);
+      letter-spacing:.2px;
+      line-height:1.1;
+    }
+    p{
+      margin:0;
+      color:var(--muted);
+      font-size: clamp(12px, 1.7vh, 14px);
+      line-height:1.25;
+    }
+
+    .board{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding: clamp(10px, 2vh, 14px);
+      display:grid;
+      gap: clamp(6px, 1.4vh, 10px);
+      background:#fff;
+    }
+
+    .row{
+      display:grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
+      gap: clamp(6px, 1.4vh, 10px);
     }
 
-    .tile {
-      aspect-ratio: 1 / 1;
-      border: 2px solid var(--border);
+    .tile{
+      aspect-ratio:1/1;
+      border:2px solid var(--border);
       border-radius: var(--tile-radius);
-      background: var(--tile);
-      display: grid;
-      place-items: center;
-      font-weight: 800;
-      font-size: clamp(22px, 6vw, 34px);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      user-select: none;
+      display:grid;
+      place-items:center;
+      font-weight:900;
+      font-size: clamp(18px, 5.6vh, 34px); /* scales with height */
+      letter-spacing:1px;
+      text-transform:uppercase;
+      user-select:none;
       transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+      background:#fff;
     }
+    .tile.pop{ transform: scale(1.04); }
+    .tile.green{ background:var(--green); border-color:var(--green); color:#fff; }
+    .tile.yellow{ background:var(--yellow); border-color:var(--yellow); color:#111; }
+    .tile.gray{ background:var(--gray); border-color:var(--gray); color:#fff; }
 
-    .tile.pop { transform: scale(1.04); }
-    .tile.green { background: var(--green); border-color: var(--green); color: #fff; }
-    .tile.yellow { background: var(--yellow); border-color: var(--yellow); color: #111; }
-    .tile.gray { background: var(--gray); border-color: var(--gray); color: #fff; }
-
-    .controls {
-      width: 100%;
-      display: grid;
-      gap: 10px;
-      grid-template-columns: 1fr;
-      align-items: center;
+    .controls{
+      width:100%;
+      display:grid;
+      gap: clamp(6px, 1.2vh, 10px);
     }
-
-    .inputRow {
-      display: grid;
+    .inputRow{
+      display:grid;
       grid-template-columns: 1fr auto;
-      gap: 10px;
-      width: 100%;
+      gap:10px;
+      width:100%;
     }
 
-    input {
-      width: 100%;
-      padding: 14px 14px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      font-size: 16px;
-      outline: none;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
+    input{
+      width:100%;
+      padding: clamp(10px, 1.8vh, 14px);
+      border:1px solid var(--border);
+      border-radius:14px;
+      font-size:16px;
+      outline:none;
+      text-transform:uppercase;
+      letter-spacing:.8px;
+      background:#fff;
     }
-    input:focus { border-color: #c7c7c7; }
+    input:focus{ border-color:#c7c7c7; }
 
-    button {
-      padding: 14px 16px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      background: #111;
-      color: #fff;
-      font-weight: 700;
-      font-size: 15px;
-      cursor: pointer;
+    button{
+      padding: clamp(10px, 1.8vh, 14px) 16px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#111;
+      color:#fff;
+      font-weight:800;
+      font-size:15px;
+      cursor:pointer;
       transition: transform 120ms ease, opacity 120ms ease;
+      white-space:nowrap;
     }
-    button:active { transform: scale(0.98); }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button:active{ transform: scale(.98); }
+    button:disabled{ opacity:.5; cursor:not-allowed; }
 
-    .msg { min-height: 22px; font-weight: 700; font-size: 14px; }
-    .footer { margin-top: 6px; font-size: 12px; color: var(--muted); }
+    .msg{
+      min-height: 18px;
+      font-weight:800;
+      font-size: clamp(12px, 1.6vh, 14px);
+      color: #111;
+    }
 
-    .success {
+    .footer{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ===== MODAL ===== */
+    .modalOverlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.35);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 9999;
+    }
+    .modalOverlay.show{ display:flex; }
+
+    .modal{
+      width:min(520px, 100%);
+      background:#fff;
+      border-radius: 22px;
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px;
-      width: 100%;
-      display: none;
-      gap: 8px;
-      background: #fff;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      text-align:center;
+      display:grid;
+      gap: 10px;
+      position: relative;
     }
-    .success.show { display: grid; }
-    .success .big { font-size: 18px; font-weight: 900; }
+    .modal h2{
+      margin:0;
+      font-size: 20px;
+      font-weight: 900;
+    }
+    .modal .sub{
+      margin:0;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .modal .word{
+      font-size: 26px;
+      font-weight: 1000;
+      letter-spacing: 2px;
+    }
+    .modal .btnRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .btnLight{
+      background:#fff;
+      color:#111;
+      border:1px solid var(--border);
+    }
 
-    @media (max-height: 720px) {
-      .board { padding: 12px; }
-      .row { gap: 8px; }
-      .tile { border-radius: 12px; }
+    /* Small heights: tighten more */
+    @media (max-height: 700px){
+      .modal{ padding: 14px; gap: 8px; }
+      .modal .word{ font-size: 24px; }
+      .board{ padding: 10px; }
     }
   </style>
 </head>
+
 <body>
-  <main class="wrap">
-    <h1>Begriffel</h1>
-    <p>4 Buchstaben. 6 Versuche. Nur für euch. 🤝</p>
+  <div class="stage">
+    <main class="wrap">
+      <h1>Begriffel</h1>
+      <p>4 Buchstaben. 6 Versuche. Nur für euch. 🤝</p>
 
-    <section class="board" id="board" aria-label="Spielbrett"></section>
+      <section class="board" id="board" aria-label="Spielbrett"></section>
 
-    <section class="success" id="success">
-      <div class="big">🎉 Yes! Du hast es!</div>
-      <div>Das Wort war: <strong>PRIM</strong></div>
-      <div class="footer">Happy Birthday ❤️</div>
-    </section>
+      <section class="controls">
+        <div class="inputRow">
+          <input id="guess" maxlength="4" inputmode="text" autocomplete="off" autocapitalize="characters"
+                 placeholder="TIPPE 4 BUCHSTABEN" aria-label="Dein Versuch" />
+          <button id="submit" disabled>OK</button>
+        </div>
+        <div class="msg" id="msg" aria-live="polite"></div>
+        <div class="footer" id="dictStatus">Wörterbuch wird geladen …</div>
+      </section>
+    </main>
+  </div>
 
-    <section class="controls">
-      <div class="inputRow">
-        <input id="guess" maxlength="4" inputmode="text" autocomplete="off" autocapitalize="characters"
-               placeholder="TIPPE 4 BUCHSTABEN" aria-label="Dein Versuch" />
-        <button id="submit" disabled>OK</button>
+  <!-- Modal -->
+  <div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Ergebnis">
+    <div class="modal">
+      <h2 id="modalTitle">Geschafft! 🎉</h2>
+      <p class="sub" id="modalText">Happy Birthday ❤️</p>
+      <div class="word" id="modalWord">PRIM</div>
+
+      <div class="btnRow">
+        <button class="btnLight" id="playAgain">Nochmal</button>
+        <button id="closeModal">Schließen</button>
       </div>
-      <div class="msg" id="msg" aria-live="polite"></div>
-      <div class="footer" id="dictStatus">Wörterbuch wird geladen …</div>
-    </section>
-  </main>
+    </div>
+  </div>
 
   <script>
     // ===== Config =====
@@ -172,24 +250,29 @@
     const WORD_LEN = 4;
     const MAX_TRIES = 6;
 
-    // words that are ALWAYS allowed (insider words, names, etc.)
+    // Always allowed words (insider etc.)
     const ALWAYS_ALLOWED = new Set([ANSWER]);
 
     // ===== State =====
     let tryIndex = 0;
     let isOver = false;
 
-    // Dictionary set
-    let DICT = new Set();       // uppercase words
+    // Dictionary
+    let DICT = new Set();
     let dictReady = false;
 
     // ===== DOM =====
     const boardEl = document.getElementById("board");
-    const successEl = document.getElementById("success");
     const msgEl = document.getElementById("msg");
     const inputEl = document.getElementById("guess");
     const btnEl = document.getElementById("submit");
     const dictStatusEl = document.getElementById("dictStatus");
+
+    // Modal DOM
+    const overlay = document.getElementById("modalOverlay");
+    const playAgainBtn = document.getElementById("playAgain");
+    const closeModalBtn = document.getElementById("closeModal");
+    const modalWordEl = document.getElementById("modalWord");
 
     // ===== Build board =====
     const tiles = [];
@@ -200,7 +283,6 @@
       for (let c = 0; c < WORD_LEN; c++) {
         const t = document.createElement("div");
         t.className = "tile";
-        t.textContent = "";
         row.appendChild(t);
         rowTiles.push(t);
       }
@@ -209,7 +291,7 @@
     }
 
     // ===== Helpers =====
-    const setMsg = (text) => { msgEl.textContent = text || ""; };
+    const setMsg = (t) => { msgEl.textContent = t || ""; };
 
     const sanitize = (v) => (v || "")
       .toUpperCase()
@@ -221,6 +303,7 @@
       const answerArr = answer.split("");
       const guessArr = guess.split("");
 
+      // greens
       for (let i = 0; i < WORD_LEN; i++) {
         if (guessArr[i] === answerArr[i]) {
           result[i] = "green";
@@ -228,6 +311,7 @@
           guessArr[i] = null;
         }
       }
+      // yellows
       for (let i = 0; i < WORD_LEN; i++) {
         if (guessArr[i] == null) continue;
         const idx = answerArr.indexOf(guessArr[i]);
@@ -242,9 +326,9 @@
     function paintRow(rowIdx, guess, colors) {
       for (let c = 0; c < WORD_LEN; c++) {
         const tile = tiles[rowIdx][c];
-        tile.textContent = guess[c] || "";
-        tile.classList.remove("green", "yellow", "gray", "pop");
+        tile.textContent = (guess[c] || "").trim();
 
+        tile.classList.remove("green","yellow","gray","pop");
         requestAnimationFrame(() => {
           tile.classList.add("pop");
           setTimeout(() => tile.classList.remove("pop"), 140);
@@ -254,21 +338,43 @@
       }
     }
 
+    function clearBoard() {
+      for (let r = 0; r < MAX_TRIES; r++) {
+        for (let c = 0; c < WORD_LEN; c++) {
+          const tile = tiles[r][c];
+          tile.textContent = "";
+          tile.classList.remove("green","yellow","gray","pop");
+        }
+      }
+    }
+
+    function openModal(wordToShow = ANSWER) {
+      modalWordEl.textContent = wordToShow;
+      overlay.classList.add("show");
+      // prevent any accidental scroll/interaction
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeModal() {
+      overlay.classList.remove("show");
+      document.body.style.overflow = "hidden";
+    }
+
     function endGame(win) {
       isOver = true;
       inputEl.disabled = true;
       btnEl.disabled = true;
 
       if (win) {
-        successEl.classList.add("show");
         setMsg("");
+        openModal(ANSWER);
       } else {
+        // Optional: You can also show a modal on lose if you want.
         setMsg(`Leider nein 😈 Das Wort war: ${ANSWER}`);
       }
     }
 
     function isValidWord(w) {
-      // allow insider words always, even if not in dictionary
       if (ALWAYS_ALLOWED.has(w)) return true;
       return dictReady && DICT.has(w);
     }
@@ -276,13 +382,13 @@
     // ===== Dictionary loading =====
     async function loadDictionary() {
       try {
-        // words4.txt must be in the same folder as index.html
-        const res = await fetch("words4.txt", { cache: "no-store" });
+        // If your file is named differently, change this:
+        const res = await fetch("words4.txt", { cache: "no-store" }); // or "words.txt"
         if (!res.ok) throw new Error("HTTP " + res.status);
-        const text = await res.text();
 
-        // normalize + filter
+        const text = await res.text();
         const lines = text.split(/\r?\n/);
+
         for (const line of lines) {
           const w = sanitize(line.trim());
           if (w.length === WORD_LEN) DICT.add(w);
@@ -291,52 +397,43 @@
         dictReady = true;
         dictStatusEl.textContent = `Wörterbuch geladen (${DICT.size} Wörter).`;
         btnEl.disabled = false;
-      } catch (err) {
+      } catch (e) {
         dictReady = false;
-        dictStatusEl.textContent = "Wörterbuch konnte nicht geladen werden. (words4.txt fehlt?)";
-        setMsg("Fehler: words4.txt nicht gefunden. Leg die Datei ins Repo neben index.html.");
+        dictStatusEl.textContent = "Wörterbuch konnte nicht geladen werden (Datei fehlt?).";
+        setMsg("Fehler: Wortliste nicht gefunden. Lege words4.txt neben index.html.");
       }
     }
-
     loadDictionary();
 
     // ===== Input UX =====
     inputEl.addEventListener("input", () => {
       const v = sanitize(inputEl.value);
       if (inputEl.value !== v) inputEl.value = v;
-      if (!isOver) paintRow(tryIndex, v.padEnd(WORD_LEN, " "), null);
+
+      if (!isOver) {
+        // show preview in current row while typing
+        paintRow(tryIndex, v.padEnd(WORD_LEN, " "), null);
+      }
     });
 
     function submit() {
       if (isOver) return;
-      if (!dictReady) {
-        setMsg("Wörterbuch lädt noch …");
-        return;
-      }
+      if (!dictReady) { setMsg("Wörterbuch lädt noch …"); return; }
 
       const guess = sanitize(inputEl.value);
 
-      if (guess.length !== WORD_LEN) {
-        setMsg(`Bitte genau ${WORD_LEN} Buchstaben.`);
-        return;
-      }
-
-      if (!isValidWord(guess)) {
-        setMsg("Das ist kein gültiges deutsches Wort.");
-        return;
-      }
+      if (guess.length !== WORD_LEN) { setMsg(`Bitte genau ${WORD_LEN} Buchstaben.`); return; }
+      if (!isValidWord(guess)) { setMsg("Das ist kein gültiges deutsches Wort."); return; }
 
       setMsg("");
       const colors = evaluateGuess(guess, ANSWER);
       paintRow(tryIndex, guess, colors);
 
-      if (guess === ANSWER) {
-        endGame(true);
-        return;
-      }
+      if (guess === ANSWER) { endGame(true); return; }
 
       tryIndex++;
       inputEl.value = "";
+
       if (tryIndex >= MAX_TRIES) {
         endGame(false);
       } else {
@@ -345,10 +442,29 @@
     }
 
     btnEl.addEventListener("click", submit);
-    inputEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") submit();
+    inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
+
+    // ===== Modal controls =====
+    closeModalBtn.addEventListener("click", closeModal);
+    playAgainBtn.addEventListener("click", () => {
+      closeModal();
+      // reset game
+      tryIndex = 0;
+      isOver = false;
+      clearBoard();
+      inputEl.disabled = false;
+      btnEl.disabled = false;
+      inputEl.value = "";
+      setMsg("");
+      setTimeout(() => inputEl.focus(), 80);
     });
 
+    // click outside modal closes
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeModal();
+    });
+
+    // initial focus
     setTimeout(() => inputEl.focus(), 200);
   </script>
 </body>
